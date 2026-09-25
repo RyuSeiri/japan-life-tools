@@ -570,6 +570,118 @@ function TakeHomePay() {
   );
 }
 
+function SalaryTakeHome() {
+  const [annual, setAnnual] = useState("5000000");
+  const [age, setAge] = useState("30");
+  const [prefecture, setPrefecture] = useState("東京都");
+  const gross = Math.max(0, Number(annual) || 0);
+  const healthRate = prefecture === "東京都" ? 0.05 : 0.049;
+  const healthInsurance = gross * healthRate;
+  const pension = gross * 0.0915;
+  const employmentInsurance = gross * 0.0055;
+  const social = healthInsurance + pension + employmentInsurance;
+  const taxable = Math.max(0, gross - salaryDeduction(gross) - 480000 - social);
+  const incomeTax = simpleIncomeTax(taxable);
+  const residentTax = Math.max(0, gross - salaryDeduction(gross) - 430000) * 0.1 + 5000;
+  const takeHome = Math.max(0, gross - social - incomeTax - residentTax);
+  return (
+    <Card>
+      <div className="border-b border-slate-100 pb-5">
+        <p className="text-sm font-bold text-blue-600">給与シミュレーション</p>
+        <h2 className="mt-1 text-xl font-black text-slate-900">年収から手取りを計算</h2>
+        <p className="mt-2 text-sm leading-6 text-slate-500">年収、年齢、都道府県をもとに、税金と社会保険料を含む手取りの目安を表示します。</p>
+      </div>
+      <div className="mt-6 grid gap-4 md:grid-cols-3">
+        <Field label="年収（総支給）">
+          <input className={inputClass} type="number" min="0" value={annual} onChange={(e) => setAnnual(e.target.value)} />
+        </Field>
+        <Field label="年齢">
+          <input className={inputClass} type="number" min="16" max="100" value={age} onChange={(e) => setAge(e.target.value)} />
+        </Field>
+        <Field label="都道府県">
+          <select className={inputClass} value={prefecture} onChange={(e) => setPrefecture(e.target.value)}>
+            <option>東京都</option>
+            <option>大阪府</option>
+            <option>神奈川県</option>
+            <option>その他</option>
+          </select>
+        </Field>
+      </div>
+      <Result>
+        <div className="text-sm font-semibold text-slate-500">月の手取り目安</div>
+        <div className="mt-1 text-3xl text-blue-700"><Money value={takeHome / 12} /></div>
+        <div className="mt-2 text-sm font-normal text-slate-500">年齢 {age || "-"}歳・{prefecture}</div>
+      </Result>
+      <Breakdown items={[["年収", gross], ["所得税の目安", incomeTax], ["住民税の目安", residentTax], ["健康保険の目安", healthInsurance], ["厚生年金の目安", pension], ["雇用保険の目安", employmentInsurance], ["手取り年収の目安", takeHome]]} />
+      <p className="mt-4 text-xs leading-5 text-slate-500">実際の保険料や税額は、標準報酬月額、扶養、控除、加入先などで変わります。40歳以上の介護保険料と賞与はこの簡易計算に含まれません。</p>
+    </Card>
+  );
+}
+
+function PensionCalculator() {
+  const [monthly, setMonthly] = useState("350000");
+  const pension = Math.max(0, Number(monthly) || 0) * 0.0915;
+  return <Card><Field label="標準報酬月額の目安"><input className={inputClass} type="number" min="0" value={monthly} onChange={(e) => setMonthly(e.target.value)} /></Field><Result><div className="text-sm text-slate-500">月の厚生年金保険料（本人負担目安）</div><div className="mt-1 text-3xl text-blue-700"><Money value={pension} /></div></Result><Breakdown items={[["月額", pension], ["年間換算", pension * 12]]} /><p className="mt-4 text-xs leading-5 text-slate-500">本人負担率を9.15%として計算した概算です。実際は標準報酬月額等級で決まります。</p></Card>;
+}
+
+function EmploymentInsuranceCalculator() {
+  const [monthly, setMonthly] = useState("350000");
+  const [rate, setRate] = useState("0.55");
+  const premium = Math.max(0, Number(monthly) || 0) * Math.max(0, Number(rate) || 0) / 100;
+  return <Card><div className="grid gap-4 md:grid-cols-2"><Field label="月の賃金"><input className={inputClass} type="number" min="0" value={monthly} onChange={(e) => setMonthly(e.target.value)} /></Field><Field label="労働者負担率（%）"><input className={inputClass} type="number" min="0" step="0.01" value={rate} onChange={(e) => setRate(e.target.value)} /></Field></div><Result><div className="text-sm text-slate-500">月の雇用保険料目安</div><div className="mt-1 text-3xl text-blue-700"><Money value={premium} /></div></Result><p className="mt-4 text-xs leading-5 text-slate-500">保険料率は事業区分・年度によって異なります。給与明細の金額を優先してください。</p></Card>;
+}
+
+function AnnualMonthlyConverter() {
+  const [annual, setAnnual] = useState("5000000");
+  const [bonus, setBonus] = useState("0");
+  const yearly = Math.max(0, Number(annual) || 0);
+  const bonusAmount = Math.min(yearly, Math.max(0, Number(bonus) || 0));
+  const monthly = (yearly - bonusAmount) / 12;
+  return <Card><div className="grid gap-4 md:grid-cols-2"><Field label="年収"><input className={inputClass} type="number" min="0" value={annual} onChange={(e) => setAnnual(e.target.value)} /></Field><Field label="年間ボーナス"><input className={inputClass} type="number" min="0" value={bonus} onChange={(e) => setBonus(e.target.value)} /></Field></div><Result><div className="text-sm text-slate-500">月収（ボーナス除く）</div><div className="mt-1 text-3xl text-blue-700"><Money value={monthly} /></div></Result><Breakdown items={[["年収", yearly], ["年間ボーナス", bonusAmount], ["月収 x 12", monthly * 12]]} /></Card>;
+}
+
+function MortgageCalculator() {
+  const [principal, setPrincipal] = useState("35000000");
+  const [rate, setRate] = useState("0.7");
+  const [years, setYears] = useState("35");
+  const loan = Math.max(0, Number(principal) || 0);
+  const months = Math.max(1, Number(years) || 1) * 12;
+  const monthlyRate = Math.max(0, Number(rate) || 0) / 100 / 12;
+  const payment = monthlyRate === 0 ? loan / months : loan * monthlyRate * ((1 + monthlyRate) ** months) / (((1 + monthlyRate) ** months) - 1);
+  return <Card><div className="grid gap-4 md:grid-cols-3"><Field label="借入金額"><input className={inputClass} type="number" min="0" value={principal} onChange={(e) => setPrincipal(e.target.value)} /></Field><Field label="年利（%）"><input className={inputClass} type="number" min="0" step="0.01" value={rate} onChange={(e) => setRate(e.target.value)} /></Field><Field label="返済期間（年）"><input className={inputClass} type="number" min="1" value={years} onChange={(e) => setYears(e.target.value)} /></Field></div><Result><div className="text-sm text-slate-500">毎月の返済額目安</div><div className="mt-1 text-3xl text-blue-700"><Money value={payment} /></div></Result><Breakdown items={[["借入金額", loan], ["総返済額", payment * months], ["利息合計", payment * months - loan]]} /><p className="mt-4 text-xs leading-5 text-slate-500">元利均等返済の概算です。諸費用、ボーナス返済、金利変動は含みません。</p></Card>;
+}
+
+function RentInitialCostCalculator() {
+  const [rent, setRent] = useState("100000");
+  const [deposit, setDeposit] = useState("1");
+  const [keyMoney, setKeyMoney] = useState("1");
+  const [fee, setFee] = useState("1");
+  const value = (amount: string) => Math.max(0, Number(amount) || 0);
+  const monthly = value(rent);
+  const total = monthly * (1 + value(deposit) + value(keyMoney) + value(fee)) + monthly * 0.5 + 20000;
+  return <Card><div className="grid gap-4 md:grid-cols-2"><Field label="月額家賃"><input className={inputClass} type="number" min="0" value={rent} onChange={(e) => setRent(e.target.value)} /></Field><Field label="敷金（月数）"><input className={inputClass} type="number" min="0" step="0.5" value={deposit} onChange={(e) => setDeposit(e.target.value)} /></Field><Field label="礼金（月数）"><input className={inputClass} type="number" min="0" step="0.5" value={keyMoney} onChange={(e) => setKeyMoney(e.target.value)} /></Field><Field label="仲介手数料（月数）"><input className={inputClass} type="number" min="0" step="0.1" value={fee} onChange={(e) => setFee(e.target.value)} /></Field></div><Result><div className="text-sm text-slate-500">契約時の初期費用目安</div><div className="mt-1 text-3xl text-blue-700"><Money value={total} /></div></Result><p className="mt-4 text-xs leading-5 text-slate-500">前家賃1か月、火災保険等20,000円、保証料0.5か月を含む概算です。物件の請求内容をご確認ください。</p></Card>;
+}
+
+function MovingCostCalculator() {
+  const [people, setPeople] = useState("1");
+  const [distance, setDistance] = useState("20");
+  const [season, setSeason] = useState("normal");
+  const base = (Number(people) || 1) * 30000 + (Number(distance) || 0) * 180;
+  const multiplier = season === "peak" ? 1.5 : season === "busy" ? 1.25 : 1;
+  const total = base * multiplier;
+  return <Card><div className="grid gap-4 md:grid-cols-3"><Field label="人数"><input className={inputClass} type="number" min="1" value={people} onChange={(e) => setPeople(e.target.value)} /></Field><Field label="移動距離（km）"><input className={inputClass} type="number" min="0" value={distance} onChange={(e) => setDistance(e.target.value)} /></Field><Field label="時期"><select className={inputClass} value={season} onChange={(e) => setSeason(e.target.value)}><option value="normal">通常期</option><option value="busy">繁忙期</option><option value="peak">3〜4月</option></select></Field></div><Result><div className="text-sm text-slate-500">引越し費用の目安</div><div className="mt-1 text-3xl text-blue-700"><Money value={total} /></div></Result><p className="mt-4 text-xs leading-5 text-slate-500">荷物量、建物条件、距離、日時で大きく変わります。複数社の見積もりでご確認ください。</p></Card>;
+}
+
+function UtilityCostCalculator({ kind }: { kind: "gas" | "water" }) {
+  const [usage, setUsage] = useState(kind === "gas" ? "25" : "20");
+  const [basic, setBasic] = useState(kind === "gas" ? "1100" : "900");
+  const [rate, setRate] = useState(kind === "gas" ? "180" : "180");
+  const total = Math.max(0, Number(basic) || 0) + Math.max(0, Number(usage) || 0) * Math.max(0, Number(rate) || 0);
+  const label = kind === "gas" ? "ガス" : "水道";
+  const unit = kind === "gas" ? "m³" : "m³";
+  return <Card><div className="grid gap-4 md:grid-cols-3"><Field label={`使用量（${unit}）`}><input className={inputClass} type="number" min="0" step="0.1" value={usage} onChange={(e) => setUsage(e.target.value)} /></Field><Field label="基本料金"><input className={inputClass} type="number" min="0" value={basic} onChange={(e) => setBasic(e.target.value)} /></Field><Field label="従量料金（円 / m³）"><input className={inputClass} type="number" min="0" value={rate} onChange={(e) => setRate(e.target.value)} /></Field></div><Result><div className="text-sm text-slate-500">月の{label}料金目安</div><div className="mt-1 text-3xl text-blue-700"><Money value={total} /></div></Result><p className="mt-4 text-xs leading-5 text-slate-500">料金体系は地域・契約プラン・使用量の段階制で異なります。請求額の確認用にお使いください。</p></Card>;
+}
+
 function IncomeTax() {
   const [annual, setAnnual] = useState("5000000");
   const income = Math.max(0, Number(annual) || 0);
@@ -867,11 +979,20 @@ function JsonFormatter() {
 export default function ToolClient({ slug }: { slug: string }) {
   const map: Record<string, React.ReactNode> = {
     "take-home-pay": <TakeHomePay />,
+    "salary-take-home": <SalaryTakeHome />,
     "income-tax": <IncomeTax />,
     "resident-tax": <ResidentTax />,
     "social-insurance": <SocialInsurance />,
     "overtime-pay": <OvertimePay />,
     "hourly-wage": <HourlyWage />,
+    "pension-premium": <PensionCalculator />,
+    "employment-insurance": <EmploymentInsuranceCalculator />,
+    "annual-monthly": <AnnualMonthlyConverter />,
+    "mortgage": <MortgageCalculator />,
+    "rent-initial-cost": <RentInitialCostCalculator />,
+    "moving-cost": <MovingCostCalculator />,
+    "gas-bill": <UtilityCostCalculator kind="gas" />,
+    "water-bill": <UtilityCostCalculator kind="water" />,
     "age-calculator": <AgeCalculator />,
     "date-difference": <DateDifference />,
     "date-add-subtract": <DateAddSubtract />,

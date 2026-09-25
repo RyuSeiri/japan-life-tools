@@ -5,10 +5,15 @@ import { categories, tools } from "@/lib/tools/registry";
 
 export default function Home() {
   const popular = tools.filter((tool) => tool.popular).slice(0, 6);
+  const categoryHighlights = [
+    { slug: "work", label: "給与・税金", tools: ["手取り計算", "給与手取り計算", "所得税計算", "住民税計算"] },
+    { slug: "life", label: "生活・お金", tools: ["住宅ローン計算", "家賃初期費用計算", "電気代計算", "ガソリン代計算"] },
+    { slug: "date", label: "日付・時間", tools: ["年齢計算", "日付差計算", "営業日計算", "日付計算"] },
+  ];
   return (
     <main>
-      <section className="bg-gradient-to-b from-blue-50 to-slate-50">
-        <div className="mx-auto max-w-6xl px-5 pb-16 pt-20 text-center">
+      <section className="border-b border-slate-200 bg-slate-50">
+        <div className="mx-auto max-w-6xl px-5 pb-16 pt-16 text-center md:pt-20">
           <span className="inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-bold tracking-wide text-blue-700">
             JAPAN LIFE TOOLS
           </span>
@@ -18,7 +23,7 @@ export default function Home() {
             無料計算ツール
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-600 md:text-lg">
-            給与・税金・社会保険・生活費・日付など、毎日の「これいくら？」をかんたんに計算できます。
+            給与・税金・社会保険・生活費・日付など、日本で暮らすための計算をかんたんに。
           </p>
           <div className="mt-9">
             <SearchTools />
@@ -56,7 +61,7 @@ export default function Home() {
       <section className="mx-auto max-w-6xl px-5 py-14">
         <div className="mb-7 flex items-end justify-between">
           <div>
-            <p className="text-sm font-bold text-blue-600">POPULAR TOOLS</p>
+            <p className="text-sm font-bold text-blue-600">POPULAR CALCULATORS</p>
             <h2 className="mt-1 text-2xl font-black">よく使われる計算ツール</h2>
           </div>
           <Link
@@ -90,52 +95,30 @@ export default function Home() {
       <section className="border-y border-slate-200 bg-white">
         <div className="mx-auto max-w-6xl px-5 py-14">
           <div className="mb-7">
-            <p className="text-sm font-bold text-blue-600">CATEGORIES</p>
-            <h2 className="mt-1 text-2xl font-black">目的から探す</h2>
+            <p className="text-sm font-bold text-blue-600">BROWSE BY CATEGORY</p>
+            <h2 className="mt-1 text-2xl font-black">目的から計算ツールを探す</h2>
           </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-            {categories.map((category) => {
-              const count = tools.filter(
-                (tool) => tool.category === category.slug,
-              ).length;
+          <div className="grid gap-4 lg:grid-cols-3">
+            {categoryHighlights.map((category) => {
+              const count = tools.filter((tool) => tool.category === category.slug).length;
               return (
                 <Link
                   key={category.slug}
                   href={`/categories/${category.slug}/`}
-                  className="rounded-2xl border border-slate-200 p-5 transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md"
+                  className="border border-slate-200 bg-white p-5 transition hover:border-blue-300 hover:shadow-md"
                 >
-                  <div className="text-2xl">
+                  <div className="text-2xl" aria-hidden="true">
                     {category.slug === "work"
                       ? "💰"
                       : category.slug === "date"
                         ? "📅"
-                        : category.slug === "money"
-                          ? "🧾"
-                          : category.slug === "life"
-                            ? "🏠"
-                            : "🧑‍💻"}
+                        : "🏠"}
                   </div>
-                  <h3 className="mt-3 font-extrabold">{category.name}</h3>
-                  <p className="mt-1 text-xs leading-5 text-slate-500">
-                    {category.description}
+                  <h3 className="mt-3 font-extrabold">{category.label}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    {category.tools.join("・")}
                   </p>
-                  <p className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-600">
-                    {count} tools
-                    <svg
-                      className="h-3.5 w-3.5"
-                      viewBox="0 0 20 20"
-                      fill="none"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="M4 10h11m-5-5 5 5-5 5"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </p>
+                  <p className="mt-4 text-xs font-bold text-blue-600">{count} tools を見る →</p>
                 </Link>
               );
             })}

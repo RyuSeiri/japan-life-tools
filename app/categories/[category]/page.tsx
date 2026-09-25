@@ -30,13 +30,14 @@ export default async function CategoryPage({
   const list = tools.filter((t) => t.category === category);
   return (
     <main className="mx-auto max-w-6xl px-5 py-12">
-      <div className="rounded-3xl bg-gradient-to-br from-blue-50 to-white p-8 md:p-12">
-        <p className="text-sm font-bold text-blue-600">CATEGORY</p>
-        <h1 className="mt-2 text-4xl font-black">{cat.name}</h1>
+      <div className="border-l-4 border-blue-600 bg-slate-50 p-8 md:p-12">
+        <p className="text-sm font-bold text-blue-600">{list.length} FREE TOOLS</p>
+        <h1 className="mt-2 text-4xl font-black">{cat.name}の計算ツール</h1>
         <p className="mt-4 max-w-2xl leading-7 text-slate-600">
-          {cat.description}
+          日本での生活に役立つ{cat.name}関連の無料計算ツールです。{cat.description}
         </p>
       </div>
+      <p className="mt-8 text-sm leading-7 text-slate-600">目的に合うツールを選び、必要な金額や日付を入力すると結果をすぐに確認できます。入力内容はブラウザ上でのみ計算されます。</p>
       <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
         {list.map((tool) => (
           <ToolCard key={tool.slug} tool={tool} />
