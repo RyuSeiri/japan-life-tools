@@ -73,6 +73,97 @@ function ElectricityCost() {
   const kwh=Number(watts)*Number(hours)*Number(days)/1000; return <Card><div className="grid gap-4 md:grid-cols-2"><Field label="消費電力（W）"><input className={inputClass} type="number" min="0" value={watts} onChange={e=>setWatts(e.target.value)} /></Field><Field label="1日の使用時間"><input className={inputClass} type="number" min="0" value={hours} onChange={e=>setHours(e.target.value)} /></Field><Field label="使用日数 / 月"><input className={inputClass} type="number" min="0" value={days} onChange={e=>setDays(e.target.value)} /></Field><Field label="電気単価（円/kWh）"><input className={inputClass} type="number" min="0" value={rate} onChange={e=>setRate(e.target.value)} /></Field></div><Result>月額 約 {Math.round(kwh*Number(rate)).toLocaleString()} 円</Result><p className="mt-3 text-center text-sm text-muted">月間使用量：約 {kwh.toFixed(1)} kWh</p></Card>;
 }
 
+
+function Money({ value }: { value: number }) {
+  return <span>¥{Math.round(value).toLocaleString()}</span>;
+}
+
+function TakeHomePay() {
+  const [annual, setAnnual] = useState("5000000");
+  const [bonus, setBonus] = useState("0");
+  const gross = Math.max(0, Number(annual) || 0);
+  const bonusAmount = Math.max(0, Number(bonus) || 0);
+  const monthly = Math.max(0, (gross - bonusAmount) / 12);
+  const social = gross * 0.15;
+  const taxable = Math.max(0, gross - salaryDeduction(gross) - 480000 - social);
+  const incomeTax = simpleIncomeTax(taxable);
+  const residentTax = Math.max(0, taxable * 0.10);
+  const takeHome = Math.max(0, gross - social - incomeTax - residentTax);
+  return <Card>
+    <div className="grid gap-4 md:grid-cols-2">
+      <Field label="年収（総支給）"><input className={inputClass} type="number" min="0" value={annual} onChange={e=>setAnnual(e.target.value)} /></Field>
+      <Field label="年間ボーナス"><input className={inputClass} type="number" min="0" value={bonus} onChange={e=>setBonus(e.target.value)} /></Field>
+    </div>
+    <Result><div className="text-sm font-semibold text-slate-500">年間手取り目安</div><div className="mt-1 text-3xl text-blue-700"><Money value={takeHome} /></div><div className="mt-2 text-sm font-normal text-slate-500">月平均 約 <Money value={takeHome/12} /></div></Result>
+    <Breakdown items={[["総支給",gross],["社会保険料の目安",social],["所得税の目安",incomeTax],["住民税の目安",residentTax],["手取り",takeHome]]} />
+    <p className="mt-4 text-xs leading-5 text-slate-500">簡易計算による目安です。実際の手取りは年齢、扶養、加入する健康保険、各種控除、自治体などで変わります。</p>
+  </Card>;
+}
+
+function IncomeTax() {
+  const [annual,setAnnual]=useState("5000000");
+  const income=Math.max(0,Number(annual)||0);
+  const salaryIncome=Math.max(0,income-salaryDeduction(income));
+  const taxable=Math.max(0,salaryIncome-480000);
+  const tax=simpleIncomeTax(taxable);
+  return <Card><Field label="給与収入（年収）"><input className={inputClass} type="number" min="0" value={annual} onChange={e=>setAnnual(e.target.value)} /></Field><Result><div className="text-sm text-slate-500">所得税の目安</div><div className="mt-1 text-3xl text-blue-700"><Money value={tax} /></div></Result><div className="mt-5 space-y-2 text-sm"><Row label="給与所得控除後の所得" value={salaryIncome}/><Row label="基礎控除後の課税所得（簡易）" value={taxable}/></div><p className="mt-4 text-xs leading-5 text-slate-500">扶養控除、配偶者控除、医療費控除などは含まない簡易計算です。実際の税額とは異なる場合があります。</p></Card>;
+}
+
+function ResidentTax() {
+  const [annual,setAnnual]=useState("5000000");
+  const income=Math.max(0,Number(annual)||0);
+  const salaryIncome=Math.max(0,income-salaryDeduction(income));
+  const taxable=Math.max(0,salaryIncome-430000);
+  const tax=taxable*0.10+5000;
+  return <Card><Field label="前年の給与収入（年収）"><input className={inputClass} type="number" min="0" value={annual} onChange={e=>setAnnual(e.target.value)} /></Field><Result><div className="text-sm text-slate-500">住民税の年額目安</div><div className="mt-1 text-3xl text-blue-700"><Money value={tax} /></div><div className="mt-2 text-sm font-normal text-slate-500">月平均 約 <Money value={tax/12} /></div></Result><p className="mt-4 text-xs leading-5 text-slate-500">均等割・所得割を単純化した概算です。自治体、扶養、控除などによって実際の住民税は変わります。</p></Card>;
+}
+
+function SocialInsurance() {
+  const [monthly,setMonthly]=useState("350000");
+  const [rate,setRate]=useState("15");
+  const amount=Math.max(0,Number(monthly)||0);
+  const contribution=amount*(Number(rate)||0)/100;
+  return <Card><div className="grid gap-4 md:grid-cols-2"><Field label="標準報酬月額の目安"><input className={inputClass} type="number" min="0" value={monthly} onChange={e=>setMonthly(e.target.value)} /></Field><Field label="本人負担率（概算）"><input className={inputClass} type="number" min="0" max="30" step="0.1" value={rate} onChange={e=>setRate(e.target.value)} /></Field></div><Result><div className="text-sm text-slate-500">月の社会保険料目安</div><div className="mt-1 text-3xl text-blue-700"><Money value={contribution} /></div></Result><Breakdown items={[["健康保険・厚生年金・雇用保険等（概算）",contribution],["年間換算",contribution*12]]}/><p className="mt-4 text-xs leading-5 text-slate-500">保険料率は加入先や年度などで変わるため、率を指定する簡易計算です。</p></Card>;
+}
+
+function OvertimePay() {
+  const [hourly,setHourly]=useState("1500"); const [hours,setHours]=useState("10"); const [rate,setRate]=useState("1.25");
+  const pay=(Number(hourly)||0)*(Number(hours)||0)*(Number(rate)||0);
+  return <Card><div className="grid gap-4 md:grid-cols-3"><Field label="通常時給（円）"><input className={inputClass} type="number" min="0" value={hourly} onChange={e=>setHourly(e.target.value)}/></Field><Field label="残業時間"><input className={inputClass} type="number" min="0" step="0.5" value={hours} onChange={e=>setHours(e.target.value)}/></Field><Field label="割増率"><select className={inputClass} value={rate} onChange={e=>setRate(e.target.value)}><option value="1.25">1.25倍</option><option value="1.35">1.35倍</option><option value="1.50">1.50倍</option></select></Field></div><Result><div className="text-sm text-slate-500">残業代</div><div className="mt-1 text-3xl text-blue-700"><Money value={pay}/></div></Result><p className="mt-4 text-xs leading-5 text-slate-500">休憩、深夜、休日労働、月60時間超などの複雑な条件は含まない簡易計算です。</p></Card>;
+}
+
+function HourlyWage() {
+  const [monthly,setMonthly]=useState("300000"); const [hours,setHours]=useState("160");
+  const wage=(Number(monthly)||0)/Math.max(1,Number(hours)||1);
+  return <Card><div className="grid gap-4 md:grid-cols-2"><Field label="月給（円）"><input className={inputClass} type="number" min="0" value={monthly} onChange={e=>setMonthly(e.target.value)}/></Field><Field label="月の勤務時間"><input className={inputClass} type="number" min="1" step="0.5" value={hours} onChange={e=>setHours(e.target.value)}/></Field></div><Result><div className="text-sm text-slate-500">実質時給の目安</div><div className="mt-1 text-3xl text-blue-700"><Money value={wage}/></div></Result><p className="mt-4 text-xs leading-5 text-slate-500">月給を実働時間で割った単純計算です。固定残業代などは別途考慮してください。</p></Card>;
+}
+
+function salaryDeduction(income:number) {
+  if (income <= 1625000) return 550000;
+  if (income <= 1800000) return income * 0.4 - 100000;
+  if (income <= 3600000) return income * 0.3 + 80000;
+  if (income <= 6600000) return income * 0.2 + 440000;
+  if (income <= 8500000) return income * 0.1 + 1100000;
+  return 1950000;
+}
+
+function simpleIncomeTax(taxable:number) {
+  if (taxable <= 1950000) return taxable * 0.05;
+  if (taxable <= 3300000) return taxable * 0.10 - 97500;
+  if (taxable <= 6950000) return taxable * 0.20 - 427500;
+  if (taxable <= 9000000) return taxable * 0.23 - 636000;
+  if (taxable <= 18000000) return taxable * 0.33 - 1536000;
+  if (taxable <= 40000000) return taxable * 0.40 - 2796000;
+  return taxable * 0.45 - 4796000;
+}
+
+function Row({label,value}:{label:string,value:number}) {
+  return <div className="flex justify-between border-b border-slate-100 py-2"><span className="text-slate-500">{label}</span><strong><Money value={value}/></strong></div>;
+}
+function Breakdown({items}:{items:[string,number][]}) {
+  return <div className="mt-5 rounded-xl border border-slate-100 bg-slate-50 px-4">{items.map(([label,value])=><Row key={label} label={label} value={value}/>)}</div>;
+}
+
 function JsonFormatter() {
   const [value,setValue]=useState('{"name":"Japan Life Tools","version":1}'); const [error,setError]=useState("");
   const format=()=>{try{setValue(JSON.stringify(JSON.parse(value),null,2));setError("")}catch{setError("JSONの形式が正しくありません。")}};
@@ -82,7 +173,7 @@ function JsonFormatter() {
 
 export default function ToolClient({ slug }: { slug: string }) {
   const map: Record<string, React.ReactNode> = {
-    "age-calculator": <AgeCalculator />, "date-difference": <DateDifference />, "date-add-subtract": <DateAddSubtract />,
+    "take-home-pay": <TakeHomePay />, "income-tax": <IncomeTax />, "resident-tax": <ResidentTax />, "social-insurance": <SocialInsurance />, "overtime-pay": <OvertimePay />, "hourly-wage": <HourlyWage />, "age-calculator": <AgeCalculator />, "date-difference": <DateDifference />, "date-add-subtract": <DateAddSubtract />,
     "business-days": <BusinessDays />, "tax-calculator": <TaxCalculator />, "discount-calculator": <DiscountCalculator />,
     "split-bill": <SplitBill />, "gas-cost": <GasCost />, "electricity-cost": <ElectricityCost />, "json-formatter": <JsonFormatter />
   };
