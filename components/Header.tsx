@@ -11,7 +11,10 @@ export default function Header() {
           <Link href="/categories/date/" className="hover:text-blue-600">日付・時間</Link>
           <Link href="/categories/money/" className="hover:text-blue-600">お金・節約</Link>
         </nav>
-        <Link href="/tools/" className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white hover:bg-blue-600">ツールを探す</Link>
+        <div className="flex items-center gap-3">
+          <Link href="/about/" className="hidden text-sm font-semibold text-slate-600 hover:text-blue-600 lg:block">このサイトについて</Link>
+          <Link href="/tools/" className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white hover:bg-blue-600">ツールを探す</Link>
+        </div>
       </div>
     </header>
   );
