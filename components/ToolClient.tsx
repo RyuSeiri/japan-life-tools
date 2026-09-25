@@ -84,10 +84,16 @@ function TakeHomePay() {
   const gross = Math.max(0, Number(annual) || 0);
   const bonusAmount = Math.max(0, Number(bonus) || 0);
   const monthly = Math.max(0, (gross - bonusAmount) / 12);
-  const social = gross * 0.15;
+  // Simplified employee-side estimate. Actual premiums use standard monthly remuneration,
+  // prefecture/insurer rates, age, and bonus treatment.
+  const healthInsurance = gross * 0.050;
+  const pension = gross * 0.0915;
+  const employmentInsurance = gross * 0.0055;
+  const social = healthInsurance + pension + employmentInsurance;
   const taxable = Math.max(0, gross - salaryDeduction(gross) - 480000 - social);
   const incomeTax = simpleIncomeTax(taxable);
-  const residentTax = Math.max(0, taxable * 0.10);
+  const residentTaxable = Math.max(0, gross - salaryDeduction(gross) - 430000);
+  const residentTax = residentTaxable > 0 ? residentTaxable * 0.10 + 5000 : 0;
   const takeHome = Math.max(0, gross - social - incomeTax - residentTax);
   return <Card>
     <div className="grid gap-4 md:grid-cols-2">
@@ -95,8 +101,17 @@ function TakeHomePay() {
       <Field label="年間ボーナス"><input className={inputClass} type="number" min="0" value={bonus} onChange={e=>setBonus(e.target.value)} /></Field>
     </div>
     <Result><div className="text-sm font-semibold text-slate-500">年間手取り目安</div><div className="mt-1 text-3xl text-blue-700"><Money value={takeHome} /></div><div className="mt-2 text-sm font-normal text-slate-500">月平均 約 <Money value={takeHome/12} /></div></Result>
-    <Breakdown items={[["総支給",gross],["社会保険料の目安",social],["所得税の目安",incomeTax],["住民税の目安",residentTax],["手取り",takeHome]]} />
-    <p className="mt-4 text-xs leading-5 text-slate-500">簡易計算による目安です。実際の手取りは年齢、扶養、加入する健康保険、各種控除、自治体などで変わります。</p>
+    <Breakdown items={[
+      ["総支給",gross],
+      ["健康保険料の目安",healthInsurance],
+      ["厚生年金保険料の目安",pension],
+      ["雇用保険料の目安",employmentInsurance],
+      ["社会保険料合計",social],
+      ["所得税の目安",incomeTax],
+      ["住民税の目安",residentTax],
+      ["手取り",takeHome]
+    ]} />
+    <p className="mt-4 text-xs leading-5 text-slate-500">概算モデルです。厚生年金は本人負担分を9.15%として計算しています。健康保険は5.0%、雇用保険は0.55%の仮置きで、実際は標準報酬月額・賞与、都道府県、加入先、年齢、扶養、各種控除などで変わります。住民税は前年所得を基準に計算されるため、入力年収と同額がそのまま翌年の税額になるとは限りません。</p>
   </Card>;
 }
 
