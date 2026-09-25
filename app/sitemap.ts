@@ -16,11 +16,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: base + "/disclaimer/", lastModified: new Date() },
     ...categories.map((c) => ({
       url: base + `/categories/${c.slug}/`,
-      lastModified: new Date()
+      lastModified: new Date(),
     })),
     ...tools.map((t) => ({
       url: base + `/tools/${t.slug}/`,
-      lastModified: new Date()
-    }))
+      lastModified: new Date(),
+    })),
   ];
 }
