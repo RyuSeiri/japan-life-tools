@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import ToolCard from "@/components/ToolCard";
 import SearchTools from "@/components/SearchTools";
 import { categories, tools } from "@/lib/tools/registry";
