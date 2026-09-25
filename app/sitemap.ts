@@ -9,6 +9,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: base + "/", lastModified: new Date() },
     { url: base + "/tools/", lastModified: new Date() },
+    { url: base + "/about/", lastModified: new Date() },
+    { url: base + "/contact/", lastModified: new Date() },
+    { url: base + "/privacy-policy/", lastModified: new Date() },
+    { url: base + "/terms/", lastModified: new Date() },
+    { url: base + "/disclaimer/", lastModified: new Date() },
     ...categories.map((c) => ({
       url: base + `/categories/${c.slug}/`,
       lastModified: new Date()
