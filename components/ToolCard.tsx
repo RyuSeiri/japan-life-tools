@@ -16,7 +16,7 @@ export default function ToolCard({ tool }: { tool: Tool }) {
         <p className="mt-2 text-sm leading-6 text-slate-500">{tool.description}</p>
       </div>
       <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4 text-sm font-bold text-blue-600">
-        <span>無料で計算</span><span className="transition group-hover:translate-x-1">→</span>
+        <span>無料で計算</span><svg className="h-4 w-4 transition-transform group-hover:translate-x-1" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h11M10 5l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </div>
     </Link>
   );
