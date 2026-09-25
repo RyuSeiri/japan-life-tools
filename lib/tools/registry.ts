@@ -13,7 +13,7 @@ export const tools: Tool[] = [
     slug: "take-home-pay",
     name: "手取り計算",
     description:
-      "年収・月収から所得税、住民税、社会保険料などを考慮した手取り額の目安を計算します。",
+      "給与明細の支給額、社会保険料、税金を入力して月ごとの手取り額を計算します。",
     category: "work",
     categoryName: "給与・税金",
     keywords: ["手取り計算", "給料 手取り", "年収 手取り", "給与計算"],

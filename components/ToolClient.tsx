@@ -429,69 +429,142 @@ function Money({ value }: { value: number }) {
 }
 
 function TakeHomePay() {
-  const [annual, setAnnual] = useState("5000000");
-  const [bonus, setBonus] = useState("0");
-  const gross = Math.max(0, Number(annual) || 0);
-  const bonusAmount = Math.max(0, Number(bonus) || 0);
-  const monthly = Math.max(0, (gross - bonusAmount) / 12);
-  // Simplified employee-side estimate. Actual premiums use standard monthly remuneration,
-  // prefecture/insurer rates, age, and bonus treatment.
-  const healthInsurance = gross * 0.05;
-  const pension = gross * 0.0915;
-  const employmentInsurance = gross * 0.0055;
-  const social = healthInsurance + pension + employmentInsurance;
-  const taxable = Math.max(0, gross - salaryDeduction(gross) - 480000 - social);
-  const incomeTax = simpleIncomeTax(taxable);
-  const residentTaxable = Math.max(0, gross - salaryDeduction(gross) - 430000);
-  const residentTax = residentTaxable > 0 ? residentTaxable * 0.1 + 5000 : 0;
-  const takeHome = Math.max(0, gross - social - incomeTax - residentTax);
+  const [basePay, setBasePay] = useState("570000");
+  const [overtimePay, setOvertimePay] = useState("0");
+  const [transportation, setTransportation] = useState("0");
+  const [healthInsurance, setHealthInsurance] = useState("27580");
+  const [pension, setPension] = useState("51240");
+  const [employmentInsurance, setEmploymentInsurance] = useState("2850");
+  const [childcareSupport, setChildcareSupport] = useState("644");
+  const [incomeTax, setIncomeTax] = useState("25740");
+  const [residentTax, setResidentTax] = useState("0");
+  const value = (amount: string) => Math.max(0, Number(amount) || 0);
+  const gross = value(basePay) + value(overtimePay) + value(transportation);
+  const social =
+    value(healthInsurance) +
+    value(pension) +
+    value(employmentInsurance) +
+    value(childcareSupport);
+  const afterSocial = gross - social;
+  const taxes = value(incomeTax) + value(residentTax);
+  const takeHome = afterSocial - taxes;
   return (
     <Card>
-      <div className="grid gap-4 md:grid-cols-2">
-        <Field label="年収（総支給）">
+      <div className="grid gap-4 md:grid-cols-3">
+        <Field label="基本給">
           <input
             className={inputClass}
             type="number"
             min="0"
-            value={annual}
-            onChange={(e) => setAnnual(e.target.value)}
+            value={basePay}
+            onChange={(e) => setBasePay(e.target.value)}
           />
         </Field>
-        <Field label="年間ボーナス">
+        <Field label="残業代">
           <input
             className={inputClass}
             type="number"
             min="0"
-            value={bonus}
-            onChange={(e) => setBonus(e.target.value)}
+            value={overtimePay}
+            onChange={(e) => setOvertimePay(e.target.value)}
+          />
+        </Field>
+        <Field label="交通費（非課税）">
+          <input
+            className={inputClass}
+            type="number"
+            min="0"
+            value={transportation}
+            onChange={(e) => setTransportation(e.target.value)}
           />
         </Field>
       </div>
+
+      <div className="mt-7 border-t border-slate-100 pt-6">
+        <h2 className="text-base font-bold text-slate-900">社会保険料</h2>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <Field label="健康保険料">
+            <input
+              className={inputClass}
+              type="number"
+              min="0"
+              value={healthInsurance}
+              onChange={(e) => setHealthInsurance(e.target.value)}
+            />
+          </Field>
+          <Field label="厚生年金保険料">
+            <input
+              className={inputClass}
+              type="number"
+              min="0"
+              value={pension}
+              onChange={(e) => setPension(e.target.value)}
+            />
+          </Field>
+          <Field label="雇用保険料">
+            <input
+              className={inputClass}
+              type="number"
+              min="0"
+              value={employmentInsurance}
+              onChange={(e) => setEmploymentInsurance(e.target.value)}
+            />
+          </Field>
+          <Field label="子ども・子育て支援金">
+            <input
+              className={inputClass}
+              type="number"
+              min="0"
+              value={childcareSupport}
+              onChange={(e) => setChildcareSupport(e.target.value)}
+            />
+          </Field>
+        </div>
+      </div>
+
+      <div className="mt-7 border-t border-slate-100 pt-6">
+        <h2 className="text-base font-bold text-slate-900">税金等</h2>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <Field label="所得税">
+            <input
+              className={inputClass}
+              type="number"
+              min="0"
+              value={incomeTax}
+              onChange={(e) => setIncomeTax(e.target.value)}
+            />
+          </Field>
+          <Field label="住民税">
+            <input
+              className={inputClass}
+              type="number"
+              min="0"
+              value={residentTax}
+              onChange={(e) => setResidentTax(e.target.value)}
+            />
+          </Field>
+        </div>
+      </div>
+
       <Result>
         <div className="text-sm font-semibold text-slate-500">
-          年間手取り目安
+          差引支給額（手取り）
         </div>
         <div className="mt-1 text-3xl text-blue-700">
           <Money value={takeHome} />
         </div>
-        <div className="mt-2 text-sm font-normal text-slate-500">
-          月平均 約 <Money value={takeHome / 12} />
-        </div>
       </Result>
       <Breakdown
         items={[
-          ["総支給", gross],
-          ["健康保険料の目安", healthInsurance],
-          ["厚生年金保険料の目安", pension],
-          ["雇用保険料の目安", employmentInsurance],
+          ["支給額", gross],
           ["社会保険料合計", social],
-          ["所得税の目安", incomeTax],
-          ["住民税の目安", residentTax],
-          ["手取り", takeHome],
+          ["社会保険料控除後", afterSocial],
+          ["税金等合計", taxes],
+          ["差引支給額（手取り）", takeHome],
         ]}
       />
       <p className="mt-4 text-xs leading-5 text-slate-500">
-        概算モデルです。厚生年金は本人負担分を9.15%として計算しています。健康保険は5.0%、雇用保険は0.55%の仮置きで、実際は標準報酬月額・賞与、都道府県、加入先、年齢、扶養、各種控除などで変わります。住民税は前年所得を基準に計算されるため、入力年収と同額がそのまま翌年の税額になるとは限りません。
+        給与明細に記載された支給額・控除額を入力して、月ごとの手取りを確認するための計算ツールです。保険料や税額は給与明細をご確認ください。
       </p>
     </Card>
   );

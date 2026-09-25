@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   },
   description:
     "日本での生活・仕事・お金・日付計算を無料で使える便利なオンラインツール集。",
-  metadataBase: new URL("https://ryuseiri.github.io/japan-life-tools/"),
+  metadataBase: new URL("https://github.com/japan-tools/japan-life-tools/"),
 };
 
 export default function RootLayout({
