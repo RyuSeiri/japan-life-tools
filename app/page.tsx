@@ -9,6 +9,7 @@ export default function Home() {
     { slug: "work", label: "給与・税金", tools: ["手取り計算", "給与手取り計算", "所得税計算", "住民税計算"] },
     { slug: "life", label: "生活・お金", tools: ["住宅ローン計算", "家賃初期費用計算", "電気代計算", "ガソリン代計算"] },
     { slug: "date", label: "日付・時間", tools: ["年齢計算", "日付差計算", "営業日計算", "日付計算"] },
+    { slug: "family", label: "育児・家族", tools: ["出産予定日計算", "妊娠週数計算", "保育園年齢計算", "児童手当計算"] },
   ];
   return (
     <main>
@@ -98,7 +99,7 @@ export default function Home() {
             <p className="text-sm font-bold text-blue-600">BROWSE BY CATEGORY</p>
             <h2 className="mt-1 text-2xl font-black">目的から計算ツールを探す</h2>
           </div>
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {categoryHighlights.map((category) => {
               const count = tools.filter((tool) => tool.category === category.slug).length;
               return (

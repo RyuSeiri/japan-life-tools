@@ -1,6 +1,10 @@
 "use client";
 
+import { DayPicker } from "react-day-picker";
+import { ja } from "date-fns/locale";
+import { CalendarDays } from "lucide-react";
 import { useMemo, useState } from "react";
+import "react-day-picker/style.css";
 
 const inputClass =
   "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
@@ -35,6 +39,68 @@ function Result({ children }: { children: React.ReactNode }) {
   );
 }
 
+function JapaneseDatePicker({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = value ? new Date(`${value}T00:00:00`) : undefined;
+  const formatIso = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+  const display = value ? value.replaceAll("-", "/") : "日付を選択";
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        className={`${inputClass} flex items-center justify-between text-left font-medium`}
+        onClick={() => setOpen((current) => !current)}
+        aria-expanded={open}
+        aria-haspopup="dialog"
+      >
+        <span>{display}</span>
+        <CalendarDays aria-hidden="true" size={18} className="shrink-0 text-slate-500" />
+      </button>
+      {open && (
+        <div className="absolute z-30 mt-2 rounded-xl border border-slate-200 bg-white p-3 shadow-xl" role="dialog" aria-label="日付を選択">
+          <DayPicker
+            mode="single"
+            selected={selected}
+            onSelect={(date) => {
+              if (!date) return;
+              onChange(formatIso(date));
+              setOpen(false);
+            }}
+            locale={ja}
+            defaultMonth={selected}
+            startMonth={new Date(1900, 0)}
+            endMonth={new Date(2100, 11)}
+            captionLayout="dropdown"
+            navLayout="after"
+            showOutsideDays
+          />
+          <button
+            type="button"
+            className="mt-2 w-full border border-slate-200 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50"
+            onClick={() => {
+              onChange(formatIso(new Date()));
+              setOpen(false);
+            }}
+          >
+            今日を選択
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AgeCalculator() {
   const [birth, setBirth] = useState("1990-01-01");
   const [base, setBase] = useState(new Date().toISOString().slice(0, 10));
@@ -61,20 +127,10 @@ function AgeCalculator() {
     <Card>
       <div className="grid gap-4 md:grid-cols-2">
         <Field label="生年月日">
-          <input
-            className={inputClass}
-            type="date"
-            value={birth}
-            onChange={(e) => setBirth(e.target.value)}
-          />
+          <JapaneseDatePicker value={birth} onChange={setBirth} />
         </Field>
         <Field label="基準日">
-          <input
-            className={inputClass}
-            type="date"
-            value={base}
-            onChange={(e) => setBase(e.target.value)}
-          />
+          <JapaneseDatePicker value={base} onChange={setBase} />
         </Field>
       </div>
       <Result>
@@ -94,7 +150,7 @@ function DateDifference() {
       Math.round(
         (new Date(end + "T00:00:00").getTime() -
           new Date(start + "T00:00:00").getTime()) /
-          86400000,
+        86400000,
       ),
     [start, end],
   );
@@ -102,20 +158,10 @@ function DateDifference() {
     <Card>
       <div className="grid gap-4 md:grid-cols-2">
         <Field label="開始日">
-          <input
-            className={inputClass}
-            type="date"
-            value={start}
-            onChange={(e) => setStart(e.target.value)}
-          />
+          <JapaneseDatePicker value={start} onChange={setStart} />
         </Field>
         <Field label="終了日">
-          <input
-            className={inputClass}
-            type="date"
-            value={end}
-            onChange={(e) => setEnd(e.target.value)}
-          />
+          <JapaneseDatePicker value={end} onChange={setEnd} />
         </Field>
       </div>
       <Result>{days >= 0 ? `${days}日` : `-${Math.abs(days)}日`}</Result>
@@ -139,12 +185,7 @@ function DateAddSubtract() {
     <Card>
       <div className="grid gap-4 md:grid-cols-3">
         <Field label="基準日">
-          <input
-            className={inputClass}
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-          />
+          <JapaneseDatePicker value={date} onChange={setDate} />
         </Field>
         <Field label="日数">
           <input
@@ -189,20 +230,10 @@ function BusinessDays() {
     <Card>
       <div className="grid gap-4 md:grid-cols-2">
         <Field label="開始日">
-          <input
-            className={inputClass}
-            type="date"
-            value={start}
-            onChange={(e) => setStart(e.target.value)}
-          />
+          <JapaneseDatePicker value={start} onChange={setStart} />
         </Field>
         <Field label="終了日">
-          <input
-            className={inputClass}
-            type="date"
-            value={end}
-            onChange={(e) => setEnd(e.target.value)}
-          />
+          <JapaneseDatePicker value={end} onChange={setEnd} />
         </Field>
       </div>
       <Result>{count}営業日</Result>
@@ -890,6 +921,86 @@ function HourlyWage() {
   );
 }
 
+function WorkPremiumCalculator({ type }: { type: "hours" | "night" | "holiday" }) {
+  const [hourly, setHourly] = useState("1500");
+  const [hours, setHours] = useState("10");
+  const [days, setDays] = useState("1");
+  const multiplier = type === "night" ? 1.5 : type === "holiday" ? 1.35 : 1;
+  const totalHours = Math.max(0, Number(hours) || 0) * Math.max(1, Number(days) || 1);
+  const pay = Math.max(0, Number(hourly) || 0) * totalHours * multiplier;
+  const title = type === "hours" ? "残業時間" : type === "night" ? "深夜残業代" : "休日出勤手当";
+  return <Card><div className="grid gap-4 md:grid-cols-3"><Field label="通常時給"><input className={inputClass} type="number" min="0" value={hourly} onChange={(e) => setHourly(e.target.value)} /></Field><Field label={type === "hours" ? "1日の残業時間" : "1日の勤務時間"}><input className={inputClass} type="number" min="0" step="0.25" value={hours} onChange={(e) => setHours(e.target.value)} /></Field><Field label="日数"><input className={inputClass} type="number" min="1" value={days} onChange={(e) => setDays(e.target.value)} /></Field></div><Result><div className="text-sm text-slate-500">{type === "hours" ? "合計残業時間" : title}</div><div className="mt-1 text-3xl text-blue-700">{type === "hours" ? `${totalHours.toLocaleString()} 時間` : <Money value={pay} />}</div></Result><p className="mt-4 text-xs leading-5 text-slate-500">{type === "night" ? "22時から5時の深夜割増を含む1.5倍の簡易計算です。" : type === "holiday" ? "法定休日の割増率35%を用いた簡易計算です。" : "休憩時間を除いた合計時間です。"}</p></Card>;
+}
+
+function PaidLeaveCalculator() {
+  const [years, setYears] = useState("3");
+  const [days, setDays] = useState("5");
+  const serviceYears = Math.max(0, Number(years) || 0);
+  const granted = serviceYears < 0.5 ? 0 : serviceYears < 1.5 ? 10 : serviceYears < 2.5 ? 11 : serviceYears < 3.5 ? 12 : serviceYears < 4.5 ? 14 : serviceYears < 5.5 ? 16 : serviceYears < 6.5 ? 18 : 20;
+  const used = Math.max(0, Number(days) || 0);
+  return <Card><div className="grid gap-4 md:grid-cols-2"><Field label="勤続年数"><input className={inputClass} type="number" min="0" step="0.5" value={years} onChange={(e) => setYears(e.target.value)} /></Field><Field label="取得済み日数"><input className={inputClass} type="number" min="0" step="0.5" value={days} onChange={(e) => setDays(e.target.value)} /></Field></div><Result><div className="text-sm text-slate-500">有給休暇の残日数目安</div><div className="mt-1 text-3xl text-blue-700">{Math.max(0, granted - used)} 日</div></Result><Breakdown items={[["法定付与日数の目安", granted], ["取得済み日数", used]]} /><p className="mt-4 text-xs leading-5 text-slate-500">週5日以上勤務・出勤率8割以上の場合の法定付与日数です。繰越分や所定労働日数は考慮していません。</p></Card>;
+}
+
+function ChildcareBenefitCalculator() {
+  const [salary, setSalary] = useState("300000");
+  const [months, setMonths] = useState("6");
+  const monthly = Math.max(0, Number(salary) || 0);
+  const period = Math.max(0, Number(months) || 0);
+  const benefit = monthly * period * (period <= 6 ? 0.67 : 0.5);
+  return <Card><div className="grid gap-4 md:grid-cols-2"><Field label="休業開始前の月額賃金"><input className={inputClass} type="number" min="0" value={salary} onChange={(e) => setSalary(e.target.value)} /></Field><Field label="給付対象月数"><input className={inputClass} type="number" min="0" value={months} onChange={(e) => setMonths(e.target.value)} /></Field></div><Result><div className="text-sm text-slate-500">育児休業給付の目安</div><div className="mt-1 text-3xl text-blue-700"><Money value={benefit} /></div></Result><p className="mt-4 text-xs leading-5 text-slate-500">開始から180日までは67%、以降は50%として計算した概算です。支給上限、賃金支払、制度改定は含みません。</p></Card>;
+}
+
+function LifeCostCalculator({ type }: { type: "deposit" | "ratio" | "commuter" | "car" | "nhk" }) {
+  const [first, setFirst] = useState(type === "car" ? "300000" : type === "commuter" ? "1200" : type === "nhk" ? "1100" : "100000");
+  const [second, setSecond] = useState(type === "ratio" ? "350000" : type === "commuter" ? "20" : type === "car" ? "50000" : "1");
+  const [third, setThird] = useState(type === "car" ? "40000" : type === "commuter" ? "18000" : "1");
+  const a = Math.max(0, Number(first) || 0), b = Math.max(0, Number(second) || 0), c = Math.max(0, Number(third) || 0);
+  const result = type === "deposit" ? a * (b + c) : type === "ratio" ? a / Math.max(1, b) * 100 : type === "commuter" ? a * b - c : type === "car" ? a / 12 + b / 12 + c / 12 : a * 12;
+  const title = type === "deposit" ? "敷金・礼金の合計" : type === "ratio" ? "家賃の手取り比率" : type === "commuter" ? "定期券との差額（月額）" : type === "car" ? "車の年間維持費（月平均）" : "NHK受信料（年額目安）";
+  const labels = type === "deposit" ? ["家賃", "敷金（月数）", "礼金（月数）"] : type === "ratio" ? ["月額家賃", "月の手取り", "予備"] : type === "commuter" ? ["片道運賃", "出勤日数", "定期券（月額）"] : type === "car" ? ["自動車税（年額）", "保険料（年額）", "車検・整備（年額）"] : ["月額受信料", "予備", "予備"];
+  return <Card><div className="grid gap-4 md:grid-cols-3"><Field label={labels[0]}><input className={inputClass} type="number" min="0" value={first} onChange={(e) => setFirst(e.target.value)} /></Field><Field label={labels[1]}><input className={inputClass} type="number" min="0" value={second} onChange={(e) => setSecond(e.target.value)} /></Field>{type !== "nhk" && <Field label={labels[2]}><input className={inputClass} type="number" min="0" value={third} onChange={(e) => setThird(e.target.value)} /></Field>}</div><Result><div className="text-sm text-slate-500">{title}</div><div className="mt-1 text-3xl text-blue-700">{type === "ratio" ? `${result.toFixed(1)}%` : <Money value={result} />}</div></Result><p className="mt-4 text-xs leading-5 text-slate-500">地域・契約・勤務日数・車種などで実額は変わります。比較の目安としてご利用ください。</p></Card>;
+}
+
+function DateUtility({ type }: { type: "service" | "resignation" | "maternity" | "due" | "pregnancy" | "baby" | "nursery" | "leave" | "month-edge" | "era" | "zodiac" }) {
+  const today = new Date().toISOString().slice(0, 10);
+  const [date, setDate] = useState(type === "era" || type === "zodiac" ? "1990" : type === "month-edge" ? today.slice(0, 7) : "2023-04-01");
+  const [base, setBase] = useState(today);
+  const parsed = new Date(`${date.length === 7 ? `${date}-01` : date}T00:00:00`);
+  const reference = new Date(`${base}T00:00:00`);
+  const days = Math.floor((reference.getTime() - parsed.getTime()) / 86400000);
+  const addDays = (amount: number) => { const result = new Date(parsed); result.setDate(result.getDate() + amount); return result.toLocaleDateString("ja-JP"); };
+  const year = Math.max(1, Number(date) || 1);
+  const zodiacs = ["申", "酉", "戌", "亥", "子", "丑", "寅", "卯", "辰", "巳", "午", "未"];
+  const era = year >= 2019 ? `令和${year - 2018}年` : year >= 1989 ? `平成${year - 1988}年` : year >= 1926 ? `昭和${year - 1925}年` : `${year}年`;
+  const details = type === "service" ? `${Math.max(0, Math.floor(days / 365.2425))}年 ${Math.max(0, Math.floor(days % 365.2425 / 30.44))}か月` : type === "resignation" ? addDays(14) : type === "maternity" ? `${addDays(-42)} 〜 ${addDays(56)}` : type === "due" ? addDays(280) : type === "pregnancy" ? `${Math.max(0, Math.floor(days / 7))}週 ${Math.max(0, days % 7)}日` : type === "baby" ? `${Math.max(0, Math.floor(days / 30.44))}か月` : type === "nursery" ? `${reference.getFullYear() - parsed.getFullYear() - (reference < new Date(reference.getFullYear(), parsed.getMonth(), parsed.getDate()) ? 1 : 0)}歳` : type === "leave" ? `${parsed.toLocaleDateString("ja-JP")} 〜 ${addDays(365)}` : type === "month-edge" ? `${new Date(parsed.getFullYear(), parsed.getMonth(), 1).toLocaleDateString("ja-JP")} 〜 ${new Date(parsed.getFullYear(), parsed.getMonth() + 1, 0).toLocaleDateString("ja-JP")}` : type === "era" ? era : `${year}年は${zodiacs[year % 12]}年`;
+  const label = type === "era" || type === "zodiac" ? "西暦" : type === "month-edge" ? "年月" : type === "due" || type === "pregnancy" ? "最終月経開始日" : type === "baby" || type === "nursery" || type === "leave" ? "生年月日" : type === "maternity" ? "出産予定日" : type === "resignation" ? "退職を伝える日" : "入社日";
+  const resultTitle = type === "service" ? "勤続年数" : type === "resignation" ? "退職日の目安" : type === "maternity" ? "産休期間の目安" : type === "due" ? "出産予定日" : type === "pregnancy" ? "妊娠週数" : type === "baby" ? "月齢" : type === "nursery" ? "基準日時点の年齢" : type === "leave" ? "育休期間の目安" : type === "month-edge" ? "月初・月末" : type === "era" ? "和暦" : "干支";
+  return <Card><div className="grid gap-4 md:grid-cols-2"><Field label={label}>{type === "era" || type === "zodiac" ? <input className={inputClass} type="number" value={date} onChange={(e) => setDate(e.target.value)} /> : type === "month-edge" ? <input className={inputClass} type="month" value={date} onChange={(e) => setDate(e.target.value)} /> : <JapaneseDatePicker value={date} onChange={setDate} />}</Field>{!["era", "zodiac", "month-edge", "maternity", "due", "leave"].includes(type) && <Field label="基準日"><JapaneseDatePicker value={base} onChange={setBase} /></Field>}</div><Result><div className="text-sm text-slate-500">{resultTitle}</div><div className="mt-1 text-2xl text-blue-700">{details}</div></Result><p className="mt-4 text-xs leading-5 text-slate-500">制度上の日数・年齢の扱いは用途によって異なる場合があります。公的な手続きでは提出先の案内をご確認ください。</p></Card>;
+}
+
+function ChildAllowanceCalculator() {
+  const [children, setChildren] = useState("1");
+  const [age, setAge] = useState("2");
+  const count = Math.max(0, Number(children) || 0), childAge = Math.max(0, Number(age) || 0);
+  const perChild = childAge < 3 ? 15000 : childAge < 18 ? 10000 : 0;
+  return <Card><div className="grid gap-4 md:grid-cols-2"><Field label="対象児童数"><input className={inputClass} type="number" min="0" value={children} onChange={(e) => setChildren(e.target.value)} /></Field><Field label="児童の年齢"><input className={inputClass} type="number" min="0" value={age} onChange={(e) => setAge(e.target.value)} /></Field></div><Result><div className="text-sm text-slate-500">児童手当（月額目安）</div><div className="mt-1 text-3xl text-blue-700"><Money value={perChild * count} /></div></Result><p className="mt-4 text-xs leading-5 text-slate-500">年齢のみを用いた簡易計算です。所得要件・第3子以降の加算・制度改定は自治体の案内をご確認ください。</p></Card>;
+}
+
+function HolidayCalculator() {
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const day = new Date(`${date}T00:00:00`);
+  const nthMonday = (month: number, nth: number) => {
+    const first = new Date(day.getFullYear(), month, 1);
+    return 1 + ((8 - first.getDay()) % 7) + (nth - 1) * 7;
+  };
+  const fixed: Record<string, string> = { "1-1": "元日", "2-11": "建国記念の日", "2-23": "天皇誕生日", "4-29": "昭和の日", "5-3": "憲法記念日", "5-4": "みどりの日", "5-5": "こどもの日", "8-11": "山の日", "11-3": "文化の日", "11-23": "勤労感謝の日" };
+  const key = `${day.getMonth() + 1}-${day.getDate()}`;
+  const vernal = Math.floor(20.8431 + 0.242194 * (day.getFullYear() - 1980) - Math.floor((day.getFullYear() - 1980) / 4));
+  const autumn = Math.floor(23.2488 + 0.242194 * (day.getFullYear() - 1980) - Math.floor((day.getFullYear() - 1980) / 4));
+  const holiday = fixed[key] ?? (day.getMonth() === 0 && day.getDate() === nthMonday(0, 2) ? "成人の日" : day.getMonth() === 6 && day.getDate() === nthMonday(6, 3) ? "海の日" : day.getMonth() === 8 && day.getDate() === nthMonday(8, 3) ? "敬老の日" : day.getMonth() === 9 && day.getDate() === nthMonday(9, 2) ? "スポーツの日" : day.getMonth() === 2 && day.getDate() === vernal ? "春分の日" : day.getMonth() === 8 && day.getDate() === autumn ? "秋分の日" : "");
+  return <Card><Field label="確認したい日"><JapaneseDatePicker value={date} onChange={setDate} /></Field><Result><div className="text-sm text-slate-500">祝日判定</div><div className="mt-1 text-3xl text-blue-700">{holiday || "祝日ではありません"}</div></Result><p className="mt-4 text-xs leading-5 text-slate-500">主な国民の祝日を判定します。振替休日・国民の休日・一時的な祝日の扱いは含みません。</p></Card>;
+}
+
 function salaryDeduction(income: number) {
   if (income <= 1625000) return 550000;
   if (income <= 1800000) return income * 0.4 - 100000;
@@ -988,15 +1099,38 @@ export default function ToolClient({ slug }: { slug: string }) {
     "pension-premium": <PensionCalculator />,
     "employment-insurance": <EmploymentInsuranceCalculator />,
     "annual-monthly": <AnnualMonthlyConverter />,
+    "paid-leave": <PaidLeaveCalculator />,
+    "overtime-hours": <WorkPremiumCalculator type="hours" />,
+    "night-overtime": <WorkPremiumCalculator type="night" />,
+    "holiday-work": <WorkPremiumCalculator type="holiday" />,
+    "resignation-date": <DateUtility type="resignation" />,
+    "service-years": <DateUtility type="service" />,
+    "childcare-benefit": <ChildcareBenefitCalculator />,
+    "maternity-leave": <DateUtility type="maternity" />,
     "mortgage": <MortgageCalculator />,
     "rent-initial-cost": <RentInitialCostCalculator />,
     "moving-cost": <MovingCostCalculator />,
     "gas-bill": <UtilityCostCalculator kind="gas" />,
     "water-bill": <UtilityCostCalculator kind="water" />,
+    "deposit-key-money": <LifeCostCalculator type="deposit" />,
+    "rent-income-ratio": <LifeCostCalculator type="ratio" />,
+    "commuter-pass": <LifeCostCalculator type="commuter" />,
+    "car-ownership": <LifeCostCalculator type="car" />,
+    "nhk-fee": <LifeCostCalculator type="nhk" />,
     "age-calculator": <AgeCalculator />,
     "date-difference": <DateDifference />,
     "date-add-subtract": <DateAddSubtract />,
     "business-days": <BusinessDays />,
+    "japanese-era": <DateUtility type="era" />,
+    "zodiac": <DateUtility type="zodiac" />,
+    "month-edges": <DateUtility type="month-edge" />,
+    "japanese-holiday": <HolidayCalculator />,
+    "due-date": <DateUtility type="due" />,
+    "pregnancy-weeks": <DateUtility type="pregnancy" />,
+    "baby-age": <DateUtility type="baby" />,
+    "nursery-age": <DateUtility type="nursery" />,
+    "parental-leave": <DateUtility type="leave" />,
+    "child-allowance": <ChildAllowanceCalculator />,
     "tax-calculator": <TaxCalculator />,
     "discount-calculator": <DiscountCalculator />,
     "split-bill": <SplitBill />,
