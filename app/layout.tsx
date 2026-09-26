@@ -14,6 +14,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://github.com/japan-tools/japan-life-tools/"),
   verification: {
     google: "nScZP2sBUKhxwKfvtKwCxQkPMCIOOvYNT35E5W2pDn8",
+    yandex: "08cf8be4eff9b193",
   },
 };
 
