@@ -21,7 +21,7 @@ npm run build
 
 ## GitHub Pages
 
-https://github.com/japan-tools/japan-life-tools/
+https://japan-tools.github.io
 
 GitHub Pages の公開設定は **Settings → Pages → Source: GitHub Actions** にしてください。
 

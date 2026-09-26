@@ -22,7 +22,7 @@ export default function ContactPage() {
           </p>
           <a
             className="mt-4 inline-flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-3 font-bold text-white hover:bg-blue-600"
-            href="https://github.com/japan-tools/japan-life-tools/issues"
+            href="https://japan-tools.github.ioissues"
             target="_blank"
             rel="noreferrer"
           >
