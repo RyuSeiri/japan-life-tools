@@ -4,7 +4,7 @@ import { tools, categories } from "@/lib/tools/registry";
 export const dynamic = "force-static";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = "https://japan-tools.github.io";
+  const base = "https://japan-tools.github.io/";
 
   return [
     { url: base + "/", lastModified: new Date() },
